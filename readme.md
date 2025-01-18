@@ -30,6 +30,14 @@ The package is divided into two components:
      - `HOLIDAY_TYPE`: Specifies the type of holiday (optional).
    - **Output**: Returns the date of the specified holiday.
 
+### Holiday Table Dependency (`TB_CALENDARIO_FERIADOS`)
+
+Some functions, such as `CHRONOS`, rely on a table called `TB_CALENDARIO_FERIADOS` to identify holidays. This table is used to skip non-business days based on holiday definitions.
+
+#### Important:
+The `TB_CALENDARIO_FERIADOS` table is **not included** in the database by default. You must update the table name and field references in the package code to match the structure of your own holiday table.
+If your table has a different name or structure, make sure to update all references to `TB_CALENDARIO_FERIADOS` in the package body.
+
 ## Files
 1. **`PCK_HEITOR_LIBRARY_SPEC.sql`**: Contains the package specification, defining the functions and procedures available.
 2. **`PCK_HEITOR_LIBRARY_BODY.sql`**: Implements the logic for the functions defined in the specification.
