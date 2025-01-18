@@ -56,7 +56,6 @@ BEGIN
   result := HEITOR_LIBRARY.BISSEXTOX('2024');
   DBMS_OUTPUT.PUT_LINE('Leap year result: ' || result);
 END;
-/
 
 -- Calculate Easter for a given year
 DECLARE
@@ -65,7 +64,6 @@ BEGIN
   easter_date := HEITOR_LIBRARY.PASCHALIS_CALCULUS('2025');
   DBMS_OUTPUT.PUT_LINE('Easter 2025: ' || TO_CHAR(easter_date, 'YYYY-MM-DD'));
 END;
-/
 ```
 
 ## Installation
