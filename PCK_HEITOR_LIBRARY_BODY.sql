@@ -2353,4 +2353,304 @@ EXCEPTION
 
 END;
 
+
+FUNCTION IMPERIUMWORDS(VALUE IN VARCHAR2,
+                       UNIT  IN VARCHAR2 DEFAULT 1)
+
+RETURN VARCHAR2 IS
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: IMPERIUMWORDS                                                                                                       ####
+  ####  DATA CRIAÇÃO: 25/05/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função IMPERIUMWORDS, escrita em PL/SQL, converte um número em seu valor por extenso em português,        ####
+  ####  podendo retornar o valor por extenso de forma monetária (como "dois mil e cinquenta reais e vinte centavos")                ####
+  ####  ou apenas numérica (como "dois mil e cinquenta"). Ela aceita dois parâmetros: o número a ser convertido e                   ####
+  ####  uma opção indicando se o retorno deve ser monetário (1) ou numérico (2). A função trata números inteiros                    ####
+  ####  e decimais, separando-os em grupos de três dígitos (centenas, milhares, milhões etc.) e montando a representação            ####
+  ####  textual conforme as regras gramaticais do português. Além disso, lida com casos específicos como “cem”, “mil” sem “um”      ####
+  ####  antes, pluralizações corretas e zero, e também trata os centavos quando a opção for monetária. A função possui tratamento   ####
+  ####  de erros e validações para garantir entradas corretas e gerar mensagens apropriadas em caso de inconsistência.              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+
+TYPE T_ARRAY IS TABLE OF VARCHAR2(50) INDEX BY BINARY_INTEGER;
+V_UNIDADES     T_ARRAY;
+V_DEZ10_19     T_ARRAY;
+V_DEZENAS      T_ARRAY;
+V_CENTENAS     T_ARRAY;
+V_SINGULAR     T_ARRAY;
+V_PLURAL       T_ARRAY;
+V_INTEIRO      NUMBER := TRUNC(VALUE);
+V_CENTAVOS     NUMBER := ROUND(MOD(VALUE, 1) * 100);
+V_GRUPOS       T_ARRAY;
+V_TEXTO        VARCHAR2(4000);
+V_TRECHO       VARCHAR2(4000);
+V_POS          PLS_INTEGER := 1;
+V_UNIT         PLS_INTEGER;
+
+FUNCTION POREXTENSOGRUPO(N NUMBER)
+
+RETURN VARCHAR2 IS
+
+C   NUMBER := TRUNC(N / 100);
+D   NUMBER := TRUNC(MOD(N, 100) / 10);
+U   NUMBER := MOD(N, 10);
+R   NUMBER := MOD(N, 100);
+TXT VARCHAR2(4000);
+
+BEGIN
+
+IF N = 0 THEN
+RETURN NULL;
+
+ELSIF N = 100 THEN
+RETURN 'cem';
+
+ELSE
+
+IF C > 0 THEN
+TXT := V_CENTENAS(C);
+END IF;
+
+IF R > 0 THEN
+
+IF TXT IS NOT NULL THEN
+TXT := TXT || ' e ';
+END IF;
+
+IF R BETWEEN 10 AND 19 THEN
+TXT := TXT || V_DEZ10_19(R);
+
+ELSE
+
+IF D > 0 THEN
+TXT := TXT || V_DEZENAS(D);
+
+IF U > 0 THEN
+TXT := TXT || ' e ' || V_UNIDADES(U);
+END IF;
+
+ELSIF U > 0 THEN
+TXT := TXT || V_UNIDADES(U);
+END IF;
+
+END IF;
+
+END IF;
+
+END IF;
+
+RETURN TXT;
+
+END;
+
+
+
+
+BEGIN
+
+BEGIN
+
+V_UNIT := TRUNC(ABS(UNIT));
+
+EXCEPTION
+     WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20084, 'Erro: O valor fornecido para unit não é válido. Apenas números são permitidos.');
+
+END;
+
+IF V_UNIT IS NULL THEN
+  RAISE_APPLICATION_ERROR(-20008,
+                          'Erro: O parâmetro unit não pode ser null.');
+ELSIF V_UNIT NOT IN (1, 2) THEN
+  RAISE_APPLICATION_ERROR(-20016,
+                          'Erro: O valor fornecido para o parâmetro unit não é válido. O use 1 para monetária ou 2 para numérica.');
+END IF;
+
+    -- DICIONÁRIOS
+    V_UNIDADES(1) := 'um';
+    V_UNIDADES(2) := 'dois';
+    V_UNIDADES(3) := 'três';
+    V_UNIDADES(4) := 'quatro';
+    V_UNIDADES(5) := 'cinco';
+    V_UNIDADES(6) := 'seis';
+    V_UNIDADES(7) := 'sete';
+    V_UNIDADES(8) := 'oito';
+    V_UNIDADES(9) := 'nove';
+
+    V_DEZ10_19(10) := 'dez';
+    V_DEZ10_19(11) := 'onze';
+    V_DEZ10_19(12) := 'doze';
+    V_DEZ10_19(13) := 'treze';
+    V_DEZ10_19(14) := 'quatorze';
+    V_DEZ10_19(15) := 'quinze';
+    V_DEZ10_19(16) := 'dezesseis';
+    V_DEZ10_19(17) := 'dezessete';
+    V_DEZ10_19(18) := 'dezoito';
+    V_DEZ10_19(19) := 'dezenove';
+
+    V_DEZENAS(2) := 'vinte';
+    V_DEZENAS(3) := 'trinta';
+    V_DEZENAS(4) := 'quarenta';
+    V_DEZENAS(5) := 'cinquenta';
+    V_DEZENAS(6) := 'sessenta';
+    V_DEZENAS(7) := 'setenta';
+    V_DEZENAS(8) := 'oitenta';
+    V_DEZENAS(9) := 'noventa';
+
+    V_CENTENAS(1) := 'cento';
+    V_CENTENAS(2) := 'duzentos';
+    V_CENTENAS(3) := 'trezentos';
+    V_CENTENAS(4) := 'quatrocentos';
+    V_CENTENAS(5) := 'quinhentos';
+    V_CENTENAS(6) := 'seiscentos';
+    V_CENTENAS(7) := 'setecentos';
+    V_CENTENAS(8) := 'oitocentos';
+    V_CENTENAS(9) := 'novecentos';
+
+    V_SINGULAR(1) := NULL;
+    V_SINGULAR(2) := 'mil';
+    V_SINGULAR(3) := 'milhão';
+    V_SINGULAR(4) := 'bilhão';
+    V_SINGULAR(5) := 'trilhão';
+    V_SINGULAR(6) := 'quatrilhão';
+    V_SINGULAR(7) := 'quintilhão';
+    V_SINGULAR(8) := 'sextilhão';
+    V_SINGULAR(9) := 'septilhão';
+    V_SINGULAR(10) := 'octilhão';
+    V_SINGULAR(11) := 'nonilhão';
+    V_SINGULAR(12) := 'decilhão';
+
+    V_PLURAL(1) := NULL;
+    V_PLURAL(2) := 'mil';
+    V_PLURAL(3) := 'milhões';
+    V_PLURAL(4) := 'bilhões';
+    V_PLURAL(5) := 'trilhões';
+    V_PLURAL(6) := 'quatrilhões';
+    V_PLURAL(7) := 'quintilhões';
+    V_PLURAL(8) := 'sextilhões';
+    V_PLURAL(9) := 'septilhões';
+    V_PLURAL(10) := 'octilhões';
+    V_PLURAL(11) := 'nonilhões';
+    V_PLURAL(12) := 'decilhões';
+
+    -- DIVIDE NÚMERO EM GRUPOS DE 3 DÍGITOS
+    WHILE V_INTEIRO > 0 LOOP
+        V_GRUPOS(V_POS) := MOD(V_INTEIRO, 1000);
+        V_INTEIRO := TRUNC(V_INTEIRO / 1000);
+        V_POS := V_POS + 1;
+    END LOOP;
+
+    -- CONSTRÓI O EXTENSO DOS REAIS
+    FOR I IN REVERSE 1 .. V_GRUPOS.COUNT LOOP
+        IF V_GRUPOS.EXISTS(I) AND V_GRUPOS(I) > 0 THEN
+            V_TRECHO := POREXTENSOGRUPO(V_GRUPOS(I));
+
+            IF I > 1 THEN
+               IF V_GRUPOS(I) = 1 THEN
+                  IF I = 2 THEN
+                     V_TRECHO := V_SINGULAR(I); -- APENAS "MIL", SEM "UM"
+                     ELSE
+                     V_TRECHO := 'um ' || V_SINGULAR(I);
+                     END IF;
+                     ELSE
+                     V_TRECHO := V_TRECHO || ' ' || V_PLURAL(I);
+                    END IF;
+                 END IF;
+
+            IF V_TEXTO IS NOT NULL THEN
+               V_TEXTO := V_TEXTO || ' e ' || V_TRECHO;
+            ELSE
+                V_TEXTO := V_TRECHO;
+            END IF;
+        END IF;
+    END LOOP;
+
+IF V_UNIT = 1 THEN
+
+-- TRATA ZERO
+IF V_TEXTO IS NULL THEN
+    -- Se não houver valor inteiro
+    IF V_CENTAVOS > 0 THEN
+        V_TEXTO := NULL; -- deixa nulo para montar só os centavos
+    ELSE
+        V_TEXTO := 'zero real';
+    END IF;
+ELSIF V_GRUPOS(1) = 1 AND V_GRUPOS.COUNT = 1 THEN
+    V_TEXTO := V_TEXTO || ' real';
+ELSE
+    V_TEXTO := V_TEXTO || ' reais';
+END IF;
+
+-- CENTAVOS
+IF V_CENTAVOS > 0 THEN
+    V_TRECHO := POREXTENSOGRUPO(V_CENTAVOS);
+    IF V_TEXTO IS NOT NULL THEN
+        -- Já existe valor em reais, junta com centavos com ' e '
+        IF V_CENTAVOS = 1 THEN
+            V_TEXTO := V_TEXTO || ' e ' || V_TRECHO || ' centavo';
+        ELSE
+            V_TEXTO := V_TEXTO || ' e ' || V_TRECHO || ' centavos';
+        END IF;
+    ELSE
+        -- Não tem valor inteiro, então só centavos
+        IF V_CENTAVOS = 1 THEN
+            V_TEXTO := V_TRECHO || ' centavo';
+        ELSE
+            V_TEXTO := V_TRECHO || ' centavos';
+        END IF;
+    END IF;
+END IF;
+
+ELSE
+
+-- TRATA ZERO
+IF V_TEXTO IS NULL THEN
+    -- Se não houver valor inteiro
+    IF V_CENTAVOS > 0 THEN
+        V_TEXTO := NULL; -- deixa nulo para montar só os centavos
+    ELSE
+        V_TEXTO := 'zero';
+    END IF;
+ELSIF V_GRUPOS(1) = 1 AND V_GRUPOS.COUNT = 1 THEN
+    V_TEXTO := V_TEXTO;
+ELSE
+    V_TEXTO := V_TEXTO;
+END IF;
+
+-- CENTAVOS
+IF V_CENTAVOS > 0 THEN
+    V_TRECHO := POREXTENSOGRUPO(V_CENTAVOS);
+    IF V_TEXTO IS NOT NULL THEN
+        -- Já existe valor em reais, junta com centavos com ' e '
+        IF V_CENTAVOS = 1 THEN
+            V_TEXTO := V_TEXTO || ' e ' || V_TRECHO;
+        ELSE
+            V_TEXTO := V_TEXTO || ' e ' || V_TRECHO;
+        END IF;
+    ELSE
+        -- Não tem valor inteiro, então só centavos
+        IF V_CENTAVOS = 1 THEN
+            V_TEXTO := V_TRECHO;
+        ELSE
+            V_TEXTO := V_TRECHO;
+        END IF;
+    END IF;
+END IF;
+END IF;
+
+
+    RETURN V_TEXTO;
+END;
+
 END;
