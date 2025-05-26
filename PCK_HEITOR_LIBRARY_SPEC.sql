@@ -21,13 +21,11 @@ RETURN DATE;
 FUNCTION TEMPUS_DOMINUS(START_DATE    IN DATE,
                         END_DATE      IN DATE,
                         CALENDAR_RULE IN VARCHAR2 DEFAULT 1,
-                        FULLINTERVAL  IN VARCHAR2 DEFAULT 1
-                        )
+                        FULLINTERVAL  IN VARCHAR2 DEFAULT 1)
 RETURN NUMBER;
 
 FUNCTION BINAREON(MESSAGE IN VARCHAR2,
-                  ACTION  IN VARCHAR2
-                  )
+                  ACTION  IN VARCHAR2)
 RETURN VARCHAR2;
 
 FUNCTION ACENTLESS(TEXT IN VARCHAR2)
@@ -35,41 +33,34 @@ RETURN VARCHAR2;
 
 
 FUNCTION MORSECODEX(MESSAGE IN VARCHAR2,
-                    ACTION  IN VARCHAR2
-                    )
+                    ACTION  IN VARCHAR2)
 RETURN VARCHAR2;
 
 FUNCTION DAMERAU_LEVENSHTEIN(TEXT1 IN VARCHAR2,
-                             TEXT2 IN VARCHAR2
-                             )
+                             TEXT2 IN VARCHAR2)
 RETURN NUMBER;
 
 FUNCTION DOCFORMAT(DOCNUMBER IN VARCHAR2,
-                   ACTION    IN VARCHAR2
-                   )
+                   ACTION    IN VARCHAR2)
 RETURN VARCHAR2;
 
 
 FUNCTION VALIDUSDOC(NUMDOC  IN VARCHAR2,
-                    TIPODOC IN VARCHAR2
-                    )
+                    TIPODOC IN VARCHAR2)
 RETURN VARCHAR2;
 
 
 FUNCTION CREATED_COMPLIANT_DOC(TIPODOC IN VARCHAR2,
-                               ACTION  IN VARCHAR2 DEFAULT 2
-                               )
+                               ACTION  IN VARCHAR2 DEFAULT 2)
 RETURN VARCHAR2;
 
 FUNCTION CRYPTIFY(TEXT   IN VARCHAR2,
                   KEY    IN VARCHAR2,
                   ACTION IN VARCHAR2)
-
 RETURN VARCHAR2;
 
 FUNCTION IMPERIUMWORDS(VALUE IN VARCHAR2,
                        UNIT  IN VARCHAR2 DEFAULT 1)
-
 RETURN VARCHAR2;
 
 END;
