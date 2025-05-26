@@ -6,15 +6,13 @@ RETURN VARCHAR2;
 FUNCTION CHRONOS(DATA              IN DATE,
                  SKIP_BUSINESS_DAY IN VARCHAR2 DEFAULT 2,
                  SIGN              IN VARCHAR2 DEFAULT 1,
-                 DAYS              IN VARCHAR2 DEFAULT NULL
-                 )
+                 DAYS              IN VARCHAR2 DEFAULT NULL)
 
 RETURN DATE;
 
 FUNCTION PASCHALIS_CALCULUS(YEAR         IN VARCHAR2,
                             HOLIDAY_TYPE IN VARCHAR2 DEFAULT NULL,
-                            CARNIVAL_DAY IN VARCHAR2 DEFAULT 1
-                            )
+                            CARNIVAL_DAY IN VARCHAR2 DEFAULT 1)
 RETURN DATE;
 
 
