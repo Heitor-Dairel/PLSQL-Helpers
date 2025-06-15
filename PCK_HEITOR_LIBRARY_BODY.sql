@@ -2653,4 +2653,389 @@ END IF;
     RETURN V_TEXTO;
 END;
 
+FUNCTION LUHN_VALIDATOR(CARD IN VARCHAR2)
+
+RETURN VARCHAR2 IS
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: LUHN_VALIDATOR                                                                                                      ####
+  ####  DATA CRIAÇÃO: 15/06/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função LUHN_VALIDATOR verifica se um número informado (como o de um cartão de crédito) é válido           ####
+  ####  usando o algoritmo de Luhn, que é um método comum para detectar erros de digitação. Ela recebe                              ####
+  ####  o número como texto, remove espaços e valida se ele tem pelo menos dois dígitos e não é negativo.                           ####
+  ####  Em seguida, aplica o algoritmo de Luhn: multiplica alternadamente os dígitos, soma os resultados                            ####
+  ####  conforme a regra do algoritmo e verifica se a soma total é divisível por 10. Se for, retorna 'S'                            ####
+  ####  indicando que o número é válido; caso contrário, retorna 'N'.                                                               ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+V_CARD   NUMBER;
+V_RESULT VARCHAR2(1);
+V_MULTPL NUMBER;
+V_IMPAR  NUMBER := 0;
+V_PAR    NUMBER := 0;
+V_DIV    NUMBER := 0;
+V_10     NUMBER;
+
+
+BEGIN
+
+BEGIN
+
+V_CARD := REGEXP_REPLACE(TRIM(CARD),'\s+');
+
+EXCEPTION
+WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20583, 'Erro: O valor fornecido para card não é válido. Apenas números são permitidos.');
+
+END;
+
+
+IF LENGTH(V_CARD) < 2 THEN
+
+  RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O valor fornecido para o parâmetro card não é válido. O dado deve ter mais do que 2 dígitos.');
+ELSIF
+
+  V_CARD < 2 THEN
+
+  RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O valor fornecido para o parâmetro card não é válido. O número não pode ser negativo.');
+END IF;
+
+
+FOR P IN 1 .. LENGTH(V_CARD) LOOP
+
+IF MOD(P, 2) = 0 THEN
+
+V_PAR := V_PAR + SUBSTR(V_CARD, P, 1);
+
+END IF;
+
+END LOOP;
+
+
+
+FOR I IN 1 .. LENGTH(V_CARD) LOOP
+
+IF MOD(I, 2) = 1 THEN
+
+V_MULTPL := TO_NUMBER(SUBSTR(V_CARD, I, 1)) * 2;
+
+IF LENGTH(V_MULTPL) = 2 THEN
+
+FOR D IN 1 .. 2 LOOP
+
+V_DIV := V_DIV + TO_NUMBER(SUBSTR(V_MULTPL, D, 1));
+
+END LOOP;
+
+V_IMPAR := V_IMPAR + V_DIV;
+
+V_DIV := 0;
+
+ELSE
+
+V_IMPAR := V_IMPAR + V_MULTPL;
+
+END IF;
+
+END IF;
+
+END LOOP;
+
+
+V_10 := MOD(V_PAR + V_IMPAR, 10);
+
+
+IF V_10 = 0 THEN
+
+V_RESULT := 'S';
+
+ELSE
+
+V_RESULT := 'N';
+
+END IF;
+
+
+RETURN V_RESULT;
+
+END;
+
+FUNCTION LUHN_CREATOR(BAND IN VARCHAR2)
+
+RETURN VARCHAR2 IS
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: LUHN_CREATOR                                                                                                        ####
+  ####  DATA CRIAÇÃO: 15/06/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função LUHN_CREATOR gera números de cartão de crédito válidos para testes, com base na bandeira           ####
+  ####  informada (1 = Visa, 2 = MasterCard, 3 = Elo). Ela monta os primeiros 15 dígitos com prefixos reais                         ####
+  ####  da bandeira e calcula o último dígito usando o algoritmo de Luhn, que garante que o número final seja válido.               ####
+  ####  O retorno é um número de cartão formatado, útil para ambientes de desenvolvimento e homologação.                            ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+V_BAND   NUMBER;
+V_RESULT VARCHAR(50);
+V_VISA   NUMBER;
+V_MASTER NUMBER;
+V_ELO    NUMBER;
+V_MULTPL NUMBER;
+V_IMPAR  NUMBER := 0;
+V_PAR    NUMBER := 0;
+V_DIV    NUMBER := 0;
+V_10     NUMBER;
+V_CARD   VARCHAR(50);
+V_VALIDA NUMBER;
+V_N_ELO  NUMBER;
+
+
+BEGIN
+
+BEGIN
+
+V_BAND := REGEXP_REPLACE(TRIM(BAND),'\s+');
+
+EXCEPTION
+WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20583, 'Erro: O valor fornecido para band não é válido. Apenas números são permitidos.');
+
+END;
+
+
+IF V_BAND NOT IN (1, 2, 3) THEN
+
+  RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O valor fornecido para o parâmetro band não é válido. O use 1 para visa, 2 para mastercard e 3 para elo.');
+END IF;
+
+--VISA
+IF V_BAND = 1 THEN
+
+V_CARD := '4' || TRUNC(DBMS_RANDOM.VALUE(100, 1000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(1000, 10000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(1000, 10000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(100, 1000));
+
+V_VALIDA := REGEXP_REPLACE(V_CARD,'\s+');
+
+
+--SOMA DOS PARES
+FOR P IN 1 .. LENGTH(V_VALIDA) LOOP
+
+IF MOD(P, 2) = 0 THEN
+
+V_PAR := V_PAR + SUBSTR(V_VALIDA, P, 1);
+
+END IF;
+
+END LOOP;
+
+
+--SOMA E MULTIPLICAÇÃO DOS IMPARES
+FOR I IN 1 .. LENGTH(V_VALIDA) LOOP
+
+IF MOD(I, 2) = 1 THEN
+
+V_MULTPL := TO_NUMBER(SUBSTR(V_VALIDA, I, 1)) * 2;
+
+IF LENGTH(V_MULTPL) = 2 THEN
+
+FOR D IN 1 .. 2 LOOP
+
+V_DIV := V_DIV + TO_NUMBER(SUBSTR(V_MULTPL, D, 1));
+
+END LOOP;
+
+V_IMPAR := V_IMPAR + V_DIV;
+
+V_DIV := 0;
+
+ELSE
+
+V_IMPAR := V_IMPAR + V_MULTPL;
+
+END IF;
+
+END IF;
+
+END LOOP;
+
+V_10 := 10 - MOD(V_PAR + V_IMPAR, 10);
+
+IF V_10 = 10 THEN
+
+V_10 := 0;
+
+END IF;
+
+V_RESULT := V_CARD || V_10;
+
+--MASTERCARD
+ELSIF V_BAND = 2 THEN
+
+V_CARD := TRUNC(DBMS_RANDOM.VALUE(51, 56)) || TRUNC(DBMS_RANDOM.VALUE(10, 100)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(1000, 10000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(1000, 10000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(100, 1000));
+
+V_VALIDA := REGEXP_REPLACE(V_CARD,'\s+');
+
+
+--SOMA DOS PARES
+FOR P IN 1 .. LENGTH(V_VALIDA) LOOP
+
+IF MOD(P, 2) = 0 THEN
+
+V_PAR := V_PAR + SUBSTR(V_VALIDA, P, 1);
+
+END IF;
+
+END LOOP;
+
+
+--SOMA E MULTIPLICAÇÃO DOS IMPARES
+FOR I IN 1 .. LENGTH(V_VALIDA) LOOP
+
+IF MOD(I, 2) = 1 THEN
+
+V_MULTPL := TO_NUMBER(SUBSTR(V_VALIDA, I, 1)) * 2;
+
+IF LENGTH(V_MULTPL) = 2 THEN
+
+FOR D IN 1 .. 2 LOOP
+
+V_DIV := V_DIV + TO_NUMBER(SUBSTR(V_MULTPL, D, 1));
+
+END LOOP;
+
+V_IMPAR := V_IMPAR + V_DIV;
+
+V_DIV := 0;
+
+ELSE
+
+V_IMPAR := V_IMPAR + V_MULTPL;
+
+END IF;
+
+END IF;
+
+END LOOP;
+
+V_10 := 10 - MOD(V_PAR + V_IMPAR, 10);
+
+IF V_10 = 10 THEN
+
+V_10 := 0;
+
+END IF;
+
+V_RESULT := V_CARD || V_10;
+
+
+--ELO
+ELSIF V_BAND = 3 THEN
+
+V_N_ELO := TRUNC(DBMS_RANDOM.VALUE(1, 4));
+
+IF V_N_ELO = 1 THEN
+
+   V_N_ELO := 4011;
+
+ELSIF V_N_ELO = 2 THEN
+
+   V_N_ELO := 4312;
+
+ELSIF V_N_ELO = 3 THEN
+
+   V_N_ELO := 4389;
+
+END IF;
+
+V_CARD := V_N_ELO || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(1000, 10000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(1000, 10000)) || ' ' ||
+          TRUNC(DBMS_RANDOM.VALUE(100, 1000));
+
+V_VALIDA := REGEXP_REPLACE(V_CARD,'\s+');
+
+
+--SOMA DOS PARES
+FOR P IN 1 .. LENGTH(V_VALIDA) LOOP
+
+IF MOD(P, 2) = 0 THEN
+
+V_PAR := V_PAR + SUBSTR(V_VALIDA, P, 1);
+
+END IF;
+
+END LOOP;
+
+
+--SOMA E MULTIPLICAÇÃO DOS IMPARES
+FOR I IN 1 .. LENGTH(V_VALIDA) LOOP
+
+IF MOD(I, 2) = 1 THEN
+
+V_MULTPL := TO_NUMBER(SUBSTR(V_VALIDA, I, 1)) * 2;
+
+IF LENGTH(V_MULTPL) = 2 THEN
+
+FOR D IN 1 .. 2 LOOP
+
+V_DIV := V_DIV + TO_NUMBER(SUBSTR(V_MULTPL, D, 1));
+
+END LOOP;
+
+V_IMPAR := V_IMPAR + V_DIV;
+
+V_DIV := 0;
+
+ELSE
+
+V_IMPAR := V_IMPAR + V_MULTPL;
+
+END IF;
+
+END IF;
+
+END LOOP;
+
+V_10 := 10 - MOD(V_PAR + V_IMPAR, 10);
+
+IF V_10 = 10 THEN
+
+V_10 := 0;
+
+END IF;
+
+V_RESULT := V_CARD || V_10;
+
+END IF;
+
+RETURN V_RESULT;
+
+END;
+
 END;
