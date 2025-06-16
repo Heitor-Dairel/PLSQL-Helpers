@@ -2695,7 +2695,7 @@ BEGIN
 V_CARD := REGEXP_REPLACE(TRIM(CARD),'\s+');
 
 EXCEPTION
-WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20583, 'Erro: O valor fornecido para card não é válido. Apenas números são permitidos.');
+WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20583, 'Erro: O valor fornecido para card não é válido. Apenas números são permitidos.');
 
 END;
 
@@ -2818,7 +2818,7 @@ BEGIN
 V_BAND := REGEXP_REPLACE(TRIM(BAND),'\s+');
 
 EXCEPTION
-WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20583, 'Erro: O valor fornecido para band não é válido. Apenas números são permitidos.');
+WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20583, 'Erro: O valor fornecido para band não é válido. Apenas números são permitidos.');
 
 END;
 
