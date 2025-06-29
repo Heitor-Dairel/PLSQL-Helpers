@@ -3079,10 +3079,10 @@ WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20086, 'Erro: O valor fornecido p
 
 END;
 
-IF V_N > 605 THEN
+IF V_N > 606 THEN
 
   RAISE_APPLICATION_ERROR(-20090,
-                          'Erro: O valor fornecido para o parâmetro pos não é válido. O dado deve estar entre 0 e 605.');
+                          'Erro: O valor fornecido para o parâmetro pos não é válido. O dado deve estar entre 0 e 606.');
 END IF;
 
 IF V_N IS NULL THEN
