@@ -98,8 +98,6 @@ BEGIN
   V_DIAS              := TRUNC(ABS(DAYS));
 
 
-
-
 -- SE O VALOR NÃO FOR "1 = SIM" OU "2 = N", ELE ENVIARÁ UMA MENSAGEM DE ERRO PARA O USUÁRIO.
 
   IF SKIP_BUSINESS_DAY NOT IN (1, 2) THEN
@@ -346,7 +344,7 @@ BEGIN
                  ELSIF V_HOLIDAY_TYPE = 2 THEN V_DATE := V_DATE - 2; -- SEXTA-FEIRA SANTA
                  ELSIF V_HOLIDAY_TYPE = 3 THEN V_DATE := V_DATE  + 60; -- CORPUS CHRISTI
                  END IF;
-     -- SE NÃO CAIR EM NEHUMA CONDIÇÃO SERÁ PÁSCOA COMO PADRÃO
+     -- SE NÃO CAIR EM NENHUMA CONDIÇÃO SERÁ PÁSCOA COMO PADRÃO
 
         RETURN V_DATE;
 
@@ -3035,6 +3033,318 @@ V_RESULT := V_CARD || V_10;
 END IF;
 
 RETURN V_RESULT;
+
+END;
+
+FUNCTION FIBONACCI_SERIE(POS IN VARCHAR2)
+
+RETURN SYS.ODCINUMBERLIST IS
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: FIBONACCI_SERIE                                                                                                     ####
+  ####  DATA CRIAÇÃO: 28/06/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função FIBONACCI_SERIE recebe como parâmetro uma string representando um número e retorna uma             ####
+  ####  lista (SYS.ODCINUMBERLIST) contendo os termos da sequência de Fibonacci até a posição informada.                            ####
+  ####  Ela valida o valor de entrada, convertendo-o para número positivo e inteiro, e trata possíveis erros                        ####
+  ####  como entrada inválida ou valores fora do intervalo permitido (acima de 605). A sequência é construída                       ####
+  ####  iterativamente, armazenando cada termo como elemento da lista. Se o valor for nulo ou inválido, a                           ####
+  ####  função retorna uma lista vazia.                                                                                             ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+V_SERIE SYS.ODCINUMBERLIST := SYS.ODCINUMBERLIST();
+V_ANT   NUMBER := 0;
+V_POST  NUMBER := 1;
+TEMP    NUMBER;
+V_N     PLS_INTEGER;
+
+BEGIN
+
+BEGIN
+
+V_N := TRUNC(ABS(POS));
+
+EXCEPTION
+WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20086, 'Erro: O valor fornecido para o parâmetro pos não é válido. Apenas números são permitidos.');
+
+END;
+
+IF V_N > 605 THEN
+
+  RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O valor fornecido para o parâmetro pos não é válido. O dado deve estar entre 0 e 605.');
+END IF;
+
+IF V_N IS NULL THEN
+
+RETURN V_SERIE;
+
+END IF;
+
+
+FOR I IN 1 .. V_N LOOP
+
+V_SERIE.EXTEND;
+
+V_SERIE(V_SERIE.COUNT) := V_ANT;
+
+TEMP := V_ANT + V_POST;
+
+V_ANT  := V_POST;
+V_POST := TEMP;
+
+END LOOP;
+
+RETURN V_SERIE;
+
+END;
+
+FUNCTION GENPASS(RANGE IN VARCHAR2 DEFAULT 10)
+
+RETURN VARCHAR2 IS
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: GENPASS                                                                                                             ####
+  ####  DATA CRIAÇÃO: 28/06/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função GENPASS gera uma senha aleatória de tamanho variável (padrão 10 caracteres),                       ####
+  ####  combinando letras maiúsculas, letras minúsculas, números e caracteres especiais definidos na função.                        ####
+  ####  Ela valida o parâmetro de tamanho para garantir que seja um número válido, e para cada caractere da                         ####
+  ####  senha seleciona aleatoriamente um tipo (maiúscula, minúscula, número ou especial), concatenando-os                          ####
+  ####  até formar a senha completa, que é então retornada como uma string.                                                         ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+RANDOM_CARACT_ESPC      VARCHAR2(32);
+RANDOM_CARACT_ALFA_MAIS VARCHAR2(26);
+RANDOM_CARACT_ALFA_MINI VARCHAR2(26);
+RANDOM_CARACT_NUMBER    PLS_INTEGER;
+V_INI_TEXT              PLS_INTEGER;
+V_SENHA                 VARCHAR2(4000);
+V_TM_SH                 PLS_INTEGER;
+V_CARACT                VARCHAR2(2);
+
+
+BEGIN
+
+RANDOM_CARACT_ALFA_MAIS := 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+RANDOM_CARACT_ALFA_MINI := LOWER('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+RANDOM_CARACT_ESPC      := TRIM(',!"#$%()*.:;<>?@{}|~±/_');
+
+BEGIN
+
+V_TM_SH := NVL(TRUNC(ABS(RANGE)),10);
+
+EXCEPTION
+WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20086, 'Erro: O valor fornecido para o parâmetro range não é válido. Apenas números são permitidos.');
+
+END;
+
+FOR TXT IN 1..V_TM_SH
+
+LOOP
+
+V_INI_TEXT := TRUNC(DBMS_RANDOM.VALUE(1, 5));
+
+IF V_INI_TEXT = 1 THEN
+
+V_CARACT   := SUBSTR(RANDOM_CARACT_ALFA_MAIS, TRUNC(DBMS_RANDOM.VALUE(1, LENGTH(RANDOM_CARACT_ALFA_MAIS) + 1)), 1);
+
+ELSIF V_INI_TEXT = 2 THEN
+
+V_CARACT   := SUBSTR(RANDOM_CARACT_ALFA_MINI, TRUNC(DBMS_RANDOM.VALUE(1, LENGTH(RANDOM_CARACT_ALFA_MINI) + 1)), 1);
+
+ELSIF V_INI_TEXT = 3 THEN
+
+V_CARACT   := SUBSTR(RANDOM_CARACT_ESPC, TRUNC(DBMS_RANDOM.VALUE(1, LENGTH(RANDOM_CARACT_ESPC) + 1)), 1);
+
+ELSE
+
+RANDOM_CARACT_NUMBER := TRUNC(DBMS_RANDOM.VALUE(0, 10));
+
+V_CARACT   := RANDOM_CARACT_NUMBER;
+
+END IF;
+
+V_SENHA    := V_SENHA || V_CARACT;
+
+END LOOP;
+
+RETURN V_SENHA;
+
+END;
+
+FUNCTION HUMAN_DELTA(START_DATE IN DATE,
+                     END_DATE   IN DATE DEFAULT SYSDATE)
+
+RETURN VARCHAR2 IS
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: HUMAN_DELTA                                                                                                         ####
+  ####  DATA CRIAÇÃO: 28/06/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função HUMAN_DELTA calcula a diferença entre duas datas no Oracle e retorna o resultado em formato        ####
+  ####  legível para humanos, expressando o intervalo em anos, meses e dias (por exemplo: "2 anos e 3 meses e 5 dias").             ####
+  ####  Ela trunca as datas para ignorar o horário, trata valores nulos no parâmetro final assumindo SYSDATE como padrão,           ####
+  ####  valida se a data inicial é menor ou igual à final e, em seguida, computa o total de meses, convertendo esse                 ####
+  ####  valor em anos, meses restantes e dias residuais. Se a diferença for zero, retorna "0 dias".                                 ####
+  ####  Em caso de erro (como START_DATE maior que END_DATE), a função dispara uma exceção                                          ####
+  ####  com mensagem personalizada.                                                                                                 ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+V_START  DATE;
+V_END    DATE;
+V_YEARS  NUMBER;
+V_MONTHS NUMBER;
+V_DAYS   NUMBER;
+V_STR    VARCHAR2(4000);
+
+BEGIN
+
+V_START := TRUNC(START_DATE);
+V_END   := TRUNC(NVL(END_DATE, SYSDATE));
+
+IF V_START > V_END THEN
+
+   RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O parâmetro start_date não pode ser maior que end_date.');
+END IF;
+
+
+
+V_MONTHS := FLOOR(MONTHS_BETWEEN(V_END, V_START));
+
+V_YEARS  := FLOOR(V_MONTHS / 12);
+
+V_MONTHS := MOD(V_MONTHS, 12);
+
+V_DAYS   := V_END - ADD_MONTHS(V_START, V_YEARS * 12 + V_MONTHS);
+
+
+IF V_YEARS > 0 THEN
+   V_STR := V_STR || V_YEARS || ' ano' || CASE WHEN V_YEARS > 1 THEN 's' END;
+END IF;
+
+IF V_MONTHS > 0 THEN
+  IF V_STR IS NOT NULL THEN V_STR := V_STR || ' e '; END IF;
+  V_STR := V_STR || V_MONTHS || ' mês' || CASE WHEN V_MONTHS > 1 THEN 'es' END;
+END IF;
+
+IF V_DAYS > 0 THEN
+   IF V_STR IS NOT NULL THEN V_STR := V_STR || ' e '; END IF;
+   V_STR := V_STR || V_DAYS || ' dia' || CASE WHEN V_DAYS > 1 THEN 's' END;
+END IF;
+
+IF V_STR IS NULL THEN
+   V_STR := '0 dias';
+END IF;
+
+RETURN V_STR;
+
+END;
+
+FUNCTION PRIMARY_TARGET(NUM IN VARCHAR2)
+
+RETURN VARCHAR2 IS
+
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: PRIMARY_TARGET                                                                                                      ####
+  ####  DATA CRIAÇÃO: 28/06/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função PRIMARY_TARGET recebe um valor numérico em formato texto, valida sua conversão para número         ####
+  ####  inteiro positivo, e verifica se esse número é primo, retornando 'S' para sim e 'N' para não.                                ####
+  ####  Números menores ou iguais a 1 retornam 'N', enquanto 2 e 3 retornam 'S'. A função elimina múltiplos                         ####
+  ####  de 2 e 3 e, em seguida, aplica uma otimização baseada no algoritmo 6k ± 1 para testar divisores até                         ####
+  ####  a raiz quadrada do número, garantindo eficiência na verificação de primalidade. Se nenhum divisor                           ####
+  ####  for encontrado, o número é considerado primo. Caso o valor informado não seja numérico, é gerado um                         ####
+  ####  erro customizado.                                                                                                           ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+V_NUMBER NUMBER;
+INI      NUMBER := 5;
+LIMIT    NUMBER;
+
+BEGIN
+
+BEGIN
+
+V_NUMBER := TRUNC(ABS(NUM));
+
+EXCEPTION
+WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20086, 'Erro: O valor fornecido para o parâmetro num não é válido. Apenas números são permitidos.');
+
+END;
+
+IF V_NUMBER IS NULL OR V_NUMBER <= 1 THEN
+
+   RETURN 'N';
+
+ELSIF V_NUMBER IN (2, 3) THEN
+
+   RETURN 'S';
+
+ELSIF MOD(V_NUMBER, 2) = 0 OR MOD(V_NUMBER, 3) = 0 THEN
+
+   RETURN 'N';
+
+END IF;
+
+
+LIMIT := FLOOR(SQRT(V_NUMBER));
+
+WHILE INI <= LIMIT LOOP
+
+IF MOD(V_NUMBER, INI) = 0 OR MOD(V_NUMBER, INI + 2) = 0 THEN
+
+RETURN 'N';
+
+END IF;
+
+INI := INI + 6;
+
+END LOOP;
+
+RETURN 'S';
 
 END;
 
