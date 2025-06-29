@@ -3050,7 +3050,7 @@ RETURN SYS.ODCINUMBERLIST IS
   ####  SOBRE A FUNÇÃO: A função FIBONACCI_SERIE recebe como parâmetro uma string representando um número e retorna uma             ####
   ####  lista (SYS.ODCINUMBERLIST) contendo os termos da sequência de Fibonacci até a posição informada.                            ####
   ####  Ela valida o valor de entrada, convertendo-o para número positivo e inteiro, e trata possíveis erros                        ####
-  ####  como entrada inválida ou valores fora do intervalo permitido (acima de 605). A sequência é construída                       ####
+  ####  como entrada inválida ou valores fora do intervalo permitido (acima de 606). A sequência é construída                       ####
   ####  iterativamente, armazenando cada termo como elemento da lista. Se o valor for nulo ou inválido, a                           ####
   ####  função retorna uma lista vazia.                                                                                             ####
   ####                                                                                                                              ####
