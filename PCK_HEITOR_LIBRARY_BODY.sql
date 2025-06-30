@@ -1521,6 +1521,7 @@ RETURN VARCHAR2 IS
   ####                                                                                                                              ####
   ####  FUNÇÃO: DOCFORMAT                                                                                                           ####
   ####  DATA CRIAÇÃO: 04/12/2024                                                                                                    ####
+  ####  DATA MODIFICAÇÃO: 29/06/2025                                                                                                ####
   ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
   ####                                                                                                                              ####
   ####  SOBRE A FUNÇÃO: A função DOCFORMAT recebe um número de documento (DOCNUMBER) e uma ação (ACTION), formatando ou             ####
@@ -1561,6 +1562,10 @@ IF V_FORMATER IS NULL THEN
 ELSIF V_FORMATER NOT IN (1, 2) THEN
   RAISE_APPLICATION_ERROR(-20016,
                           'Erro: O valor fornecido para o action não é válido. O use 1 para formatar ou 2 para desformatar.');
+
+ELSIF REGEXP_REPLACE(V_CPF_CNPJ,'[^[:alpha:]]') IS NOT NULL THEN
+  RAISE_APPLICATION_ERROR(-20002,
+                          'Erro: O valor fornecido para o docnumber não é válido. Apenas números são permitidos.');
 
 ELSIF LENGTH(V_CPF_CNPJ) NOT IN (11, 14) THEN
   RAISE_APPLICATION_ERROR(-20002,
@@ -1609,7 +1614,7 @@ RETURN VARCHAR2 IS
   ####                                                                                                                              ####
   ####  FUNÇÃO: VALIDUSDOC                                                                                                          ####
   ####  DATA CRIAÇÃO: 04/12/2024                                                                                                    ####
-  ####  DATA MODIFICAÇÃO: 07/12/2024                                                                                                ####
+  ####  DATA MODIFICAÇÃO: 29/06/2025                                                                                                ####
   ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
   ####                                                                                                                              ####
   ####  SOBRE A FUNÇÃO: A função VALIDUSDOC valida documentos como CPF, CNPJ, CNH e RG. Ela remove caracteres inválidos, ajusta o   ####
@@ -1648,7 +1653,11 @@ IF V_TIPODOC IS NULL THEN
 
 ELSIF V_TIPODOC NOT IN ('CPF', 'CNPJ', 'CNH', 'RG') THEN
   RAISE_APPLICATION_ERROR(-20016,
-                          'Erro: O valor fornecido para o action não é válido. O use CPF, CNPJ, CNH ou RG.');
+                          'Erro: O valor fornecido para o tipodoc não é válido. O use CPF, CNPJ, CNH ou RG.');
+
+ELSIF REGEXP_REPLACE(V_CPF_CNPJ,'[^[:alpha:]]') IS NOT NULL THEN
+  RAISE_APPLICATION_ERROR(-20084,
+                          'Erro: O valor fornecido para o numdoc não é válido. Apenas números são permitidos.');
 
 END IF;
 
@@ -1957,8 +1966,8 @@ WHEN VALUE_ERROR THEN RAISE_APPLICATION_ERROR(-20086, 'Erro: O valor fornecido p
 END;
 
 IF V_TIPODOC NOT IN ('CPF', 'CNPJ', 'CNH', 'RG') OR V_TIPODOC IS NULL THEN
-  RAISE_APPLICATION_ERROR(-20016,
-                          'Erro: O valor fornecido para o tipodoc não é válido. O use CPF, CNPJ, CNH ou RG para gerar um documento válido.');
+   RAISE_APPLICATION_ERROR(-20016,
+                           'Erro: O valor fornecido para o tipodoc não é válido. O use CPF, CNPJ, CNH ou RG para gerar um documento válido.');
 END IF;
 
 
