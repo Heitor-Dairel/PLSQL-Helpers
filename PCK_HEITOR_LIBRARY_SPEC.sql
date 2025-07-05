@@ -100,4 +100,14 @@ FUNCTION PRIMARY_TARGET(NUM IN VARCHAR2)
 
 RETURN VARCHAR2;
 
+
+FUNCTION CALCULUS_HORARIUM(START_DATE       IN DATE,
+                           END_DATE         IN DATE,
+                           ENTRY_TIME       IN VARCHAR2,
+                           EXIT_TIME        IN VARCHAR2,
+                           LUNCH_START_TIME IN VARCHAR2,
+                           LUNCH_END_TIME   IN VARCHAR2,
+                           CALENDAR_ROLL    IN VARCHAR2 DEFAULT 1)
+RETURN NUMBER;
+
 END;

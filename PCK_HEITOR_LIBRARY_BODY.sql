@@ -3357,4 +3357,235 @@ RETURN 'S';
 
 END;
 
+FUNCTION CALCULUS_HORARIUM(START_DATE       IN DATE,
+                           END_DATE         IN DATE,
+                           ENTRY_TIME       IN VARCHAR2,
+                           EXIT_TIME        IN VARCHAR2,
+                           LUNCH_START_TIME IN VARCHAR2,
+                           LUNCH_END_TIME   IN VARCHAR2,
+                           CALENDAR_ROLL    IN VARCHAR2 DEFAULT 1)
+
+RETURN NUMBER IS
+
+
+/*######################################################################################################################################
+  ######################################################################################################################################
+  ####                                                                                                                              ####
+  ####  FUNÇÃO: CALCULUS_HORARIUM                                                                                                   ####
+  ####  DATA CRIAÇÃO: 05/07/2025                                                                                                    ####
+  ####  AUTOR: HEITOR DAIREL GONZAGA TAVARES                                                                                        ####
+  ####                                                                                                                              ####
+  ####  SOBRE A FUNÇÃO: A função CALCULUS_HORARIUM calcula a quantidade total de horas úteis entre duas datas e horários            ####
+  ####  informados, considerando o expediente diário (horário de entrada e saída), intervalo de almoço                              ####
+  ####  e um parâmetro que define se devem ser desconsiderados feriados, finais de semana ou ambos.                                 ####
+  ####  Para cada dia no intervalo, ela verifica se o dia é válido conforme a regra escolhida,                                      ####
+  ####  calcula o período efetivamente trabalhado nesse dia e subtrai o tempo de almoço sobreposto.                                 ####
+  ####  O resultado final é a soma das horas úteis, arredondada com duas casas decimais. A função                                   ####
+  ####  também realiza validações nos parâmetros e retorna mensagens de erro claras em casos de                                     ####
+  ####  valores inválidos.                                                                                                          ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ####                                                                                                                              ####
+  ######################################################################################################################################
+  ######################################################################################################################################*/
+
+
+    V_START_DATE        DATE;
+    V_END_DATE          DATE;
+    V_ENTRY_TIME        DATE;
+    V_HOURS_DAY         NUMBER := 0;
+    V_TOTAL_HOURS       NUMBER := 0;
+    V_CALENDAR_ROLL     PLS_INTEGER;
+    V_FD                PLS_INTEGER;
+
+
+    V_WORK_START_TIME    DATE;
+    V_WORK_END_TIME      DATE;
+    V_LUNCH_START_TIME   DATE;
+    V_LUNCH_END_TIME     DATE;
+
+
+    V_WORK_START         DATE;
+    V_WORK_END           DATE;
+    V_LUNCH_START        DATE;
+    V_LUNCH_END          DATE;
+    V_REAL_START         DATE;
+    V_REAL_END           DATE;
+
+
+FUNCTION LUNCH_TIME(START_DATE DATE, END_DATE DATE, START_DATE2 DATE, END_DATE2 DATE)
+RETURN NUMBER IS
+        V_START DATE := GREATEST(START_DATE, START_DATE2);
+        V_END   DATE := LEAST(END_DATE, END_DATE2);
+    BEGIN
+        IF V_START >= V_END THEN
+            RETURN 0;
+        ELSE
+            RETURN (V_END - V_START) * 24;
+        END IF;
+    END;
+
+BEGIN
+
+BEGIN
+
+    V_WORK_START_TIME  := TO_DATE(ENTRY_TIME, 'HH24:MI');
+    V_WORK_END_TIME    := TO_DATE(EXIT_TIME, 'HH24:MI');
+    V_LUNCH_START_TIME := TO_DATE(LUNCH_START_TIME, 'HH24:MI');
+    V_LUNCH_END_TIME   := TO_DATE(LUNCH_END_TIME, 'HH24:MI');
+
+EXCEPTION
+     WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20084, 'Erro: o valor fornecido não é válido. Apenas horas e minutos são permitidos (ex: 15:30 ou 09).');
+
+END;
+
+BEGIN
+
+V_CALENDAR_ROLL := TRUNC(ABS(CALENDAR_ROLL));
+
+EXCEPTION
+     WHEN OTHERS THEN RAISE_APPLICATION_ERROR(-20084, 'Erro: o valor fornecido não é válido. Apenas números são permitidos.');
+
+END;
+
+IF START_DATE > END_DATE THEN
+
+  RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O parâmetro start_date não pode ser maior que end_date.');
+
+ELSIF CALENDAR_ROLL NOT IN (1, 2, 3) THEN
+
+      RAISE_APPLICATION_ERROR(-20090,
+                          'Erro: O valor fornecido para o parâmetro calendar_roll não é válido. O use 1 (feriado e final de semana), 2 (feriado), 3 (final de semana).');
+
+END IF;
+
+    V_START_DATE := TRUNC(START_DATE);
+
+
+IF V_CALENDAR_ROLL = 1 THEN
+
+    WHILE V_START_DATE <= TRUNC(END_DATE) LOOP
+
+        SELECT CASE
+               WHEN EXISTS
+                (SELECT 1 FROM TB_CALENDARIO_FERIADOS CF WHERE CF.DATA = V_START_DATE) OR
+                    TO_CHAR(V_START_DATE, 'D') IN (1, 7) THEN
+                1
+               ELSE
+                0
+             END
+        INTO V_FD
+        FROM DUAL;
+
+
+        IF V_FD = 0 THEN
+
+
+            V_WORK_START  := V_START_DATE + (V_WORK_START_TIME - TRUNC(V_WORK_START_TIME));
+            V_WORK_END    := V_START_DATE + (V_WORK_END_TIME - TRUNC(V_WORK_END_TIME));
+            V_LUNCH_START := V_START_DATE + (V_LUNCH_START_TIME - TRUNC(V_LUNCH_START_TIME));
+            V_LUNCH_END   := V_START_DATE + (V_LUNCH_END_TIME - TRUNC(V_LUNCH_END_TIME));
+
+
+            V_REAL_START := GREATEST(V_WORK_START, START_DATE);
+            V_REAL_END    := LEAST(V_WORK_END, END_DATE);
+
+            IF V_REAL_START < V_REAL_END THEN
+                V_HOURS_DAY := (V_REAL_END - V_REAL_START) * 24;
+
+
+                V_HOURS_DAY := V_HOURS_DAY - LUNCH_TIME(V_REAL_START, V_REAL_END, V_LUNCH_START, V_LUNCH_END);
+
+                V_TOTAL_HOURS := V_TOTAL_HOURS + V_HOURS_DAY;
+            END IF;
+
+        END IF;
+
+        V_START_DATE := V_START_DATE + 1;
+    END LOOP;
+
+    RETURN ROUND(V_TOTAL_HOURS, 2);
+
+ELSIF V_CALENDAR_ROLL = 2 THEN
+
+    WHILE V_START_DATE <= TRUNC(END_DATE) LOOP
+
+        SELECT CASE
+               WHEN EXISTS
+                (SELECT 1 FROM TB_CALENDARIO_FERIADOS CF WHERE CF.DATA = V_START_DATE) THEN
+                1
+               ELSE
+                0
+             END
+        INTO V_FD
+        FROM DUAL;
+
+
+        IF V_FD = 0 THEN
+
+
+            V_WORK_START  := V_START_DATE + (V_WORK_START_TIME - TRUNC(V_WORK_START_TIME));
+            V_WORK_END    := V_START_DATE + (V_WORK_END_TIME - TRUNC(V_WORK_END_TIME));
+            V_LUNCH_START := V_START_DATE + (V_LUNCH_START_TIME - TRUNC(V_LUNCH_START_TIME));
+            V_LUNCH_END   := V_START_DATE + (V_LUNCH_END_TIME - TRUNC(V_LUNCH_END_TIME));
+
+
+            V_REAL_START := GREATEST(V_WORK_START, START_DATE);
+            V_REAL_END    := LEAST(V_WORK_END, END_DATE);
+
+            IF V_REAL_START < V_REAL_END THEN
+                V_HOURS_DAY := (V_REAL_END - V_REAL_START) * 24;
+
+
+                V_HOURS_DAY := V_HOURS_DAY - LUNCH_TIME(V_REAL_START, V_REAL_END, V_LUNCH_START, V_LUNCH_END);
+
+                V_TOTAL_HOURS := V_TOTAL_HOURS + V_HOURS_DAY;
+            END IF;
+
+        END IF;
+
+        V_START_DATE := V_START_DATE + 1;
+    END LOOP;
+
+    RETURN ROUND(V_TOTAL_HOURS, 2);
+
+ELSE
+
+WHILE V_START_DATE <= TRUNC(END_DATE) LOOP
+
+      IF TO_CHAR(V_START_DATE, 'D') NOT IN ('1','7') THEN
+
+
+            V_WORK_START  := V_START_DATE + (V_WORK_START_TIME - TRUNC(V_WORK_START_TIME));
+            V_WORK_END    := V_START_DATE + (V_WORK_END_TIME - TRUNC(V_WORK_END_TIME));
+            V_LUNCH_START := V_START_DATE + (V_LUNCH_START_TIME - TRUNC(V_LUNCH_START_TIME));
+            V_LUNCH_END   := V_START_DATE + (V_LUNCH_END_TIME - TRUNC(V_LUNCH_END_TIME));
+
+
+            V_REAL_START := GREATEST(V_WORK_START, START_DATE);
+            V_REAL_END    := LEAST(V_WORK_END, END_DATE);
+
+            IF V_REAL_START < V_REAL_END THEN
+                V_HOURS_DAY := (V_REAL_END - V_REAL_START) * 24;
+
+
+                V_HOURS_DAY := V_HOURS_DAY - LUNCH_TIME(V_REAL_START, V_REAL_END, V_LUNCH_START, V_LUNCH_END);
+
+                V_TOTAL_HOURS := V_TOTAL_HOURS + V_HOURS_DAY;
+            END IF;
+
+        END IF;
+
+        V_START_DATE := V_START_DATE + 1;
+    END LOOP;
+
+    RETURN ROUND(V_TOTAL_HOURS, 2);
+
+END IF;
+
+END;
+
 END;
